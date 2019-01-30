@@ -35,7 +35,7 @@ void delay ()
 {
    int i,j,n;
    for (i=0; i<20; i++) { //outer loop
-   for (j=0; j<10000; j++) { //inner loop
+   for (j=0; j<8772; j++) { //inner loop
    n = j; //dummy operation for single-step test
    } //do nothing
    }
@@ -77,10 +77,10 @@ void count (a)
          led3=0;
          led4=0;
 			
-			   led5=1;
+			   led5=0;
          led6=0;
          led7=0;
-         led8=1;
+         led8=0;
          break;
       case 1:
          led1=1;
@@ -88,7 +88,7 @@ void count (a)
          led3=0;
          led4=0;
 			
-				 led5=0;
+				 led5=1;
          led6=0;
          led7=0;
          led8=1;
@@ -99,10 +99,10 @@ void count (a)
          led3=0;
          led4=0;
 			
-			   led5=1;
-         led6=1;
-         led7=1;
-         led8=0;
+			   led5=0;
+         led6=0;
+         led7=0;
+         led8=1;
          break;
       case 3:
          led1=1;
@@ -110,7 +110,7 @@ void count (a)
          led3=0;
          led4=0;
 			
-			   led5=0;
+			   led5=1;
          led6=1;
          led7=1;
          led8=0;
@@ -121,8 +121,8 @@ void count (a)
          led3=1;
          led4=0;
 			
-			   led5=1;
-         led6=0;
+			   led5=0;
+         led6=1;
          led7=1;
          led8=0;
          break;
@@ -132,7 +132,7 @@ void count (a)
          led3=1;
          led4=0;
 			
-			   led5=0;
+			   led5=1;
          led6=0;
          led7=1;
          led8=0;
@@ -143,9 +143,9 @@ void count (a)
          led3=1;
          led4=0;
 			
-			   led5=1;
-         led6=1;
-         led7=0;
+			   led5=0;
+         led6=0;
+         led7=1;
          led8=0;
          break;
       case 7:
@@ -154,7 +154,7 @@ void count (a)
          led3=1;
          led4=0;
 			
-			   led5=0;
+			   led5=1;
          led6=1;
          led7=0;
          led8=0;
@@ -165,8 +165,8 @@ void count (a)
          led3=0;
          led4=1;
 			
-			   led5=1;
-         led6=0;
+			   led5=0;
+         led6=1;
          led7=0;
          led8=0;
          break;
@@ -176,7 +176,7 @@ void count (a)
          led3=0;
          led4=1;
 			
-			   led5=0;
+			   led5=1;
          led6=0;
          led7=0;
          led8=0;
