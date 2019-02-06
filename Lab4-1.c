@@ -40,16 +40,16 @@ void PinSetup () {
  EXTI->PR |= 0x0001;            //Bit0=1 to clear EXTI0 pending status	
  SYSCFG->EXTICR[0] &= 0xFF0F;   //clears EXTI1 bit
  SYSCFG->EXTICR[0] |= 0x0000;   //set EXTI1 = 0 to select PA1
- EXTI->RTSR |= 0x0002;          //Bit0=1 to make EXTI0 rising-edge trig.
- EXTI->IMR  |= 0x0002;          //Bit0=1 to enable EXTI0
- EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI0 pending status
+ EXTI->RTSR |= 0x0002;          //Bit0=1 to make EXTI1 rising-edge trig.
+ EXTI->IMR  |= 0x0002;          //Bit0=1 to enable EXTI1
+ EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
 
 	
  //NVIC SECTION
  NVIC_EnableIRQ(6);             //set bit n to enable IRQ6
  NVIC_EnableIRQ(7);             //set bit n to enable IRQ7
- NVIC_ClearPendingIRQ (IRQ6);   // clears pending status
- NVIC_ClearPendingIRQ (IRQ7);   // clears pending status
+ NVIC_ClearPendingIRQ (6);   // clears pending status
+ NVIC_ClearPendingIRQ (7);   // clears pending status
 	
 //CPU SECTION
 __enable_irq();                 //enable interrupts
@@ -62,7 +62,7 @@ __enable_irq();                 //enable interrupts
 void EXTI0_IRQHandler () 
 {
 	direction=0;                   //decrement
-	if(led9=1)                     //toggle LED
+	if(led9==1)                     //toggle LED
 	{
 		led9=0;
    		GPIOC->BSRR = 0x0100 << 16; 
@@ -73,7 +73,9 @@ void EXTI0_IRQHandler ()
 		GPIOC->BSRR = 0x0100;
 
 	}
-	NVIC_ClearPendingIRQ (IRQ6);   // clears pending status
+	NVIC_ClearPendingIRQ (6);   // clears pending status
+	 EXTI->PR |= 0x0001;            //Bit0=1 to clear EXTI0 pending status	
+
 }
 
 /*----------------------------------------------------------*/
@@ -82,7 +84,7 @@ void EXTI0_IRQHandler ()
 void EXTI1_IRQHandler () 
 {
 	direction=1;                   // increment
-	if(led10=1)                     //toggle LED
+	if(led10==1)                     //toggle LED
 	{
 		led10=0;
 	        GPIOC->BSRR = 0x0200 << 16;
@@ -92,7 +94,9 @@ void EXTI1_IRQHandler ()
 		led10=1;
 		GPIOC->BSRR = 0x0200;
 	}
-	NVIC_ClearPendingIRQ (IRQ7);   // clears pending status
+	NVIC_ClearPendingIRQ (7);   // clears pending status
+	 EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
+
 }
 
 /*----------------------------------------------------------*/
@@ -125,7 +129,7 @@ void count (a)
          state++;
       }
    }
-   if(led0%2==0)
+   if(led1%2==0)
    {
    	if(direction==1) //incrementing
    	{
@@ -212,8 +216,11 @@ void count (a)
 		 led8=1;
 		 break;   
 	   }
-   else{}
    }
+	 else
+	 {
+	 
+	 }
    switch(state)
    {
       case 0:
