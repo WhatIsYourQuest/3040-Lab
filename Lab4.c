@@ -22,11 +22,21 @@ unsigned char led8=0; //state of LED8
 void PinSetup () {
  /* Configure PA0 as input pin to read push button */
  RCC->AHBENR |= 0x01; /* Enable GPIOA clock (bit 0) */
- GPIOA->MODER &= ~(0x0000003C); /* General purpose input mode */
+ GPIOA->MODER &= ~(0x00000000); /* General purpose input mode */
  /* Configure PC8,PC9 as output pins to drive LEDs */
  RCC->AHBENR |= 0x04; /* Enable GPIOC clock (bit 2) */
  GPIOC->MODER &= ~(0x000000FF); /* Clear PC9-PC8 mode bits */
- GPIOC->MODER |= (0x00005555); /* General purpose output mode*/
+ GPIOC->MODER |= (0x00055555); /* General purpose output mode*/
+	
+ //EXTI SECTION
+
+//NVIC SECTION
+NVIC_EnableIRQ(6); //set bit n to enable IRQ6
+NVIC_EnableIRQ(7); //set bit n to enable IRQ7
+	
+//CPU SECTION
+__enable_irq(); //enable interrupts
+
 }
 /*----------------------------------------------------------*/
 /* Delay function - do nothing for about .5 seconds */
