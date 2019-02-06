@@ -4,7 +4,9 @@
 /*====================================================*/
 #include "STM32L1xx.h" /* Microcontroller information */
 /* Define global variables */
-int state; //current state of the LEDs
+int state=0; //current state of the LEDs in counter1
+int state2=0; // current state of LEDs in counter2
+int direction=0; //direction of counter (0=inc, 1=dec)
 unsigned char led1=0; //state of LED1
 unsigned char led2=0; //state of LED2
 unsigned char led3=0; //state of LED3
@@ -13,6 +15,8 @@ unsigned char led5=0; //state of LED5
 unsigned char led6=0; //state of LED6
 unsigned char led7=0; //state of LED7
 unsigned char led8=0; //state of LED8
+unsigned char led9=0; //state of LED8
+unsigned char led10=0; //state of LED8
 
 /*---------------------------------------------------*/
 /* Initialize GPIO pins used in the program */
@@ -29,15 +33,68 @@ void PinSetup () {
  GPIOC->MODER |= (0x00055555); /* General purpose output mode*/
 	
  //EXTI SECTION
+ SYSCFG->EXTICR[0] &= 0xFFF0;   //clears EXTI0 bit
+ SYSCFG->EXTICR[0] |= 0x0000;   //set EXTI0 = 0 to select PA0
+ EXTI->RTSR |= 0x0001;          //Bit0=1 to make EXTI0 rising-edge trig.
+ EXTI->IMR |= 0x0001;           //Bit0=1 to enable EXTI0
+ EXTI->PR |= 0x0001;            //Bit0=1 to clear EXTI0 pending status	
+ SYSCFG->EXTICR[0] &= 0xFF0F;   //clears EXTI1 bit
+ SYSCFG->EXTICR[0] |= 0x0000;   //set EXTI1 = 0 to select PA1
+ EXTI->RTSR |= 0x0002;          //Bit0=1 to make EXTI0 rising-edge trig.
+ EXTI->IMR  |= 0x0002;          //Bit0=1 to enable EXTI0
+ EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI0 pending status
 
-//NVIC SECTION
-NVIC_EnableIRQ(6); //set bit n to enable IRQ6
-NVIC_EnableIRQ(7); //set bit n to enable IRQ7
+	
+ //NVIC SECTION
+ NVIC_EnableIRQ(6);             //set bit n to enable IRQ6
+ NVIC_EnableIRQ(7);             //set bit n to enable IRQ7
+ NVIC_ClearPendingIRQ (IRQ6);   // clears pending status
+ NVIC_ClearPendingIRQ (IRQ7);   // clears pending status
 	
 //CPU SECTION
-__enable_irq(); //enable interrupts
+__enable_irq();                 //enable interrupts
 
 }
+
+/*----------------------------------------------------------*/
+/* EXTI0 Interrupt Function (sets counter to decrement and toggles PC8)
+/*----------------------------------------------------------*/
+void EXTI0_IRQHandler () 
+{
+	direction=0;                   //increment
+	if(led8=1)                     //toggle LED
+	{
+		led9=0;
+   		GPIOC->BSRR = 0x0100 << 16; 
+	}
+	else
+	{
+		led9=1;
+		GPIOC->BSRR = 0x0100;
+
+	}
+	NVIC_ClearPendingIRQ (IRQ6);   // clears pending status
+}
+
+/*----------------------------------------------------------*/
+/* EXTI1 Interrupt Function (sets counter to increment and toggles PC9)
+/*----------------------------------------------------------*/
+void EXTI1_IRQHandler () 
+{
+	direction=1;                   // decrement
+	if(led9=1)                     //toggle LED
+	{
+		led10=0;
+	        GPIOC->BSRR = 0x0200 << 16;
+	}
+	else
+	{
+		led10=1;
+		GPIOC->BSRR = 0x0200;
+	}
+	NVIC_ClearPendingIRQ (IRQ7);   // clears pending status
+}
+
 /*----------------------------------------------------------*/
 /* Delay function - do nothing for about .5 seconds */
 /*----------------------------------------------------------*/
@@ -67,17 +124,95 @@ void count (a)
       {
          state++;
       }
-   } 
-   else //decrementing
+   }
+   if(led0%2==0)
    {
-      if(state==0)
-      {
-         state=9;
-      }
-      else
-      {
-         state--;
-      }
+   	if(direction==0) //incrementing
+   	{
+      		if(state2==9)
+      		{
+        		state2=0;
+        	}
+                else
+      		{
+         		state2++;
+      		}
+   	}
+	else
+	{
+      		if(state2==0)
+      		{
+        		state2=9;
+        	}
+                else
+      		{
+         		state2--;
+      		}
+   	}
+	switch(state2)
+	   {
+	      case 0:
+		 led5=0;
+		 led6=0;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 1:
+		 led5=1;
+		 led6=0;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 2:
+		 led5=0;
+		 led6=1;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 3:
+		 led5=1;
+		 led6=1;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 4:
+		 led5=0;
+		 led6=0;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 5:
+		 led5=1;
+		 led6=0;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 6:
+		 led5=0;
+		 led6=1;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 7:
+		 led5=1;
+		 led6=1;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 8:
+		 led5=0;
+		 led6=0;
+		 led7=0;
+		 led8=1;
+		 break;
+	      case 9:
+		 led5=1;
+		 led6=0;
+		 led7=0;
+		 led8=1;
+		 break;   
+	   }
+   else{}
    }
    switch(state)
    {
@@ -86,111 +221,61 @@ void count (a)
          led2=0;
          led3=0;
          led4=0;
-			
-			   led5=0;
-         led6=0;
-         led7=0;
-         led8=0;
          break;
       case 1:
          led1=1;
          led2=0;
          led3=0;
          led4=0;
-			
-				 led5=1;
-         led6=0;
-         led7=0;
-         led8=1;
-         break;
+	 break;
       case 2:
          led1=0;
          led2=1;
          led3=0;
          led4=0;
-			
-			   led5=0;
-         led6=0;
-         led7=0;
-         led8=1;
-         break;
+	 break;
       case 3:
          led1=1;
          led2=1;
          led3=0;
          led4=0;
-			
-			   led5=1;
-         led6=1;
-         led7=1;
-         led8=0;
-         break;
+	 break;
       case 4:
          led1=0;
          led2=0;
          led3=1;
          led4=0;
-			
-			   led5=0;
-         led6=1;
-         led7=1;
-         led8=0;
-         break;
+	 break;
       case 5:
          led1=1;
          led2=0;
          led3=1;
          led4=0;
-			
-			   led5=1;
-         led6=0;
-         led7=1;
-         led8=0;
-         break;
+	 break;
       case 6:
          led1=0;
          led2=1;
          led3=1;
          led4=0;
-			
-			   led5=0;
-         led6=0;
-         led7=1;
-         led8=0;
-         break;
+	 break;
       case 7:
          led1=1;
          led2=1;
          led3=1;
          led4=0;
-			
-			   led5=1;
-         led6=1;
-         led7=0;
-         led8=0;
-         break;
+	 break;
       case 8:
          led1=0;
          led2=0;
          led3=0;
          led4=1;
-			
-			   led5=0;
-         led6=1;
-         led7=0;
-         led8=0;
-         break;
+	 break;
       case 9:
          led1=1;
          led2=0;
          led3=0;
          led4=1;
-			
-			   led5=1;
-         led6=0;
-         led7=0;
-         led8=0;
-         break;
+	 break;
    }
    if (led1 == 0)
    GPIOC->BSRR = 0x0001 << 16; 
@@ -230,31 +315,12 @@ void count (a)
 /*------------------------------------------------*/
 int main(void) 
 {
-   unsigned char sw1=0; //state of SW1
-   unsigned char sw2=0; //state of SW2
-   
    PinSetup(); //Configure GPIO pins
    
    //the infinite loop will begin by counting up from zero once SW1
 while(1)
 {
-   /* Wait in loop until SW1 pressed to start*/
-   while (sw1 == 0x0000) //Wait for SW1 = 1 on PE0
-   {    
-      sw1 = GPIOA->IDR & 0x0002; //Read GPIOA and mask all but bit 1
-      sw2 = GPIOA->IDR & 0x0004; //Read GPIOA and mask all but bit 2
-   }
-   if(sw2 == 0x0000) //increment
-   {
-      count(0);
-   }
-   else //decrement
-   {
-      count(1);
-   }
+   count(0);
    delay();
-   sw1 = GPIOA->IDR & 0x01; //Read GPIOA and mask all but bit 0
-   sw2 = GPIOA->IDR & 0x02; //Read GPIOA and mask all but bit 1
-
 }
 }
