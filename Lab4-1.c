@@ -6,7 +6,7 @@
 /* Define global variables */
 int state=0; //current state of the LEDs in counter1
 int state2=0; // current state of LEDs in counter2
-int direction=0; //direction of counter (0=inc, 1=dec)
+int direction=1; //direction of counter (0=dec, 1=inc)
 unsigned char led1=0; //state of LED1
 unsigned char led2=0; //state of LED2
 unsigned char led3=0; //state of LED3
@@ -61,7 +61,7 @@ __enable_irq();                 //enable interrupts
 /*----------------------------------------------------------*/
 void EXTI0_IRQHandler () 
 {
-	direction=0;                   //increment
+	direction=0;                   //decrement
 	if(led8=1)                     //toggle LED
 	{
 		led9=0;
@@ -81,7 +81,7 @@ void EXTI0_IRQHandler ()
 /*----------------------------------------------------------*/
 void EXTI1_IRQHandler () 
 {
-	direction=1;                   // decrement
+	direction=1;                   // increment
 	if(led9=1)                     //toggle LED
 	{
 		led10=0;
@@ -127,7 +127,7 @@ void count (a)
    }
    if(led0%2==0)
    {
-   	if(direction==0) //incrementing
+   	if(direction==1) //incrementing
    	{
       		if(state2==9)
       		{
