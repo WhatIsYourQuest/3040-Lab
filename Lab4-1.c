@@ -62,7 +62,7 @@ __enable_irq();                 //enable interrupts
 void EXTI0_IRQHandler () 
 {
 	direction=0;                   //decrement
-	if(led8=1)                     //toggle LED
+	if(led9=1)                     //toggle LED
 	{
 		led9=0;
    		GPIOC->BSRR = 0x0100 << 16; 
@@ -82,7 +82,7 @@ void EXTI0_IRQHandler ()
 void EXTI1_IRQHandler () 
 {
 	direction=1;                   // increment
-	if(led9=1)                     //toggle LED
+	if(led10=1)                     //toggle LED
 	{
 		led10=0;
 	        GPIOC->BSRR = 0x0200 << 16;
