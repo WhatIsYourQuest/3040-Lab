@@ -6,7 +6,9 @@
 /* Define global variables */
 int state=0;            //current state of the LEDs in counter1
 int key=0;              //key that was pressed
-int key_var=11          //counter for deciding to display key or counter (set to 11 so default is display counter)
+int key_var=10          //counter for deciding to display key or counter (set to 10 so default is display counter)
+int row=0;              //row number (1-4)
+int column=0;           //column number (10n: 50-80)
 unsigned char led1=0;   //state of LED1
 unsigned char led2=0;   //state of LED2
 unsigned char led3=0;   //state of LED3
@@ -26,24 +28,8 @@ void PinSetup () {
  RCC->AHBENR |= 0x04;             // Enable GPIOC clock (bit 2) 
  GPIOC->MODER &= ~(0x000000FF);   // Clear PC0-PC3 mode bits 
  GPIOC->MODER |= (0x00000055);    // General purpose output mode for PC0-PC3*/
-	
-  
-  ///////////////////////////////////////*************************//////////////////////////////////////////
-                                         THIS IS AS FAR AS I GOT
-  
-                                    ALL PORTIONS ABOVE SHOULD BE FINE, 
-  
-                                  BUT ALL BELOW ARE UNTOUCHED SINCE LAB 4
-  
-                                                 -Jake
-  ///////////////////////////////////////*************************//////////////////////////////////////////
-  
- //EXTI SECTION
- SYSCFG->EXTICR[0] &= 0xFFF0;   //clears EXTI0 bit
- SYSCFG->EXTICR[0] |= 0x0000;   //set EXTI0 = 0 to select PA0
- EXTI->RTSR |= 0x0001;          //Bit0=1 to make EXTI0 rising-edge trig.
- EXTI->IMR |= 0x0001;           //Bit0=1 to enable EXTI0
- EXTI->PR |= 0x0001;            //Bit0=1 to clear EXTI0 pending status	
+ 
+ //EXTI SECTION	
  SYSCFG->EXTICR[0] &= 0xFF0F;   //clears EXTI1 bit
  SYSCFG->EXTICR[0] |= 0x0000;   //set EXTI1 = 0 to select PA1
  EXTI->RTSR |= 0x0002;          //Bit0=1 to make EXTI1 rising-edge trig.
@@ -52,9 +38,7 @@ void PinSetup () {
 
 	
  //NVIC SECTION
- NVIC_EnableIRQ(6);             //set bit n to enable IRQ6
  NVIC_EnableIRQ(7);             //set bit n to enable IRQ7
- NVIC_ClearPendingIRQ (6);   // clears pending status
  NVIC_ClearPendingIRQ (7);   // clears pending status
 	
 //CPU SECTION
@@ -63,46 +47,32 @@ __enable_irq();                 //enable interrupts
 }
 
 /*----------------------------------------------------------*/
-/* EXTI0 Interrupt Function (sets counter to decrement and toggles PC8)
-/*----------------------------------------------------------*/
-void EXTI0_IRQHandler () 
-{
-	direction=0;                   //decrement
-	if(led9==1)                     //toggle LED
-	{
-		led9=0;
-   		GPIOC->BSRR = 0x0100 << 16; 
-	}
-	else
-	{
-		led9=1;
-		GPIOC->BSRR = 0x0100;
-
-	}
-	NVIC_ClearPendingIRQ (6);   // clears pending status
-	 EXTI->PR |= 0x0001;            //Bit0=1 to clear EXTI0 pending status	
-
-}
-
-/*----------------------------------------------------------*/
-/* EXTI1 Interrupt Function (sets counter to increment and toggles PC9)
+/* EXTI1 Interrupt Function (signals the pressing of a keyboard button
 /*----------------------------------------------------------*/
 void EXTI1_IRQHandler () 
 {
-	direction=1;                   // increment
-	if(led10==1)                     //toggle LED
+	int i,j,n;
+   	for (i=0; i<20; i++)        //outer loop
 	{
-		led10=0;
-	        GPIOC->BSRR = 0x0200 << 16;
-	}
-	else
-	{
-		led10=1;
-		GPIOC->BSRR = 0x0200;
-	}
-	NVIC_ClearPendingIRQ (7);   // clears pending status
-	 EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
-
+   		for (j=0; j<18; j++) 
+		{ 		    //inner loop
+   			n = j;      //dummy operation for single-step test
+   		}                   //do nothing
+        }
+	key_var=0;
+	GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7
+        GPIOB->PUPDR |=  0x00005555;     //set bits 0-15 to 01 for PB0-PB7 pull-up
+	
+	GPIOC->MODER &= ~(0x000000FF);   // PB0-PB3    input    keypad rows
+        GPIOC->MODER |= (0x00000000);    // ^^^^
+	
+        GPIOC->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad columns
+        GPIOC->MODER |= (0x00005500);    // ^^^^
+	
+	
+	
+	NVIC_ClearPendingIRQ (7);     // clears pending status
+        EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
 }
 
 /*----------------------------------------------------------*/
