@@ -6,7 +6,7 @@
 /* Define global variables */
 int state=0;            //current state of the LEDs in counter1
 int key=0;              //key that was pressed
-int key_var=10          //counter for deciding to display key or counter (set to 10 so default is display counter)
+int key_var=10;          //counter for deciding to display key or counter (set to 10 so default is display counter)
 unsigned char led1=0;   //state of LED1
 unsigned char led2=0;   //state of LED2
 unsigned char led3=0;   //state of LED3
@@ -26,15 +26,29 @@ void PinSetup () {
  /* Configure PA1 as input for IRQ */
  RCC->AHBENR |= 0x01;             // Enable GPIOA clock (bit 0) 
  GPIOA->MODER &= ~(0x00000000);   // General purpose input mode 
+	
  /* Configure PC0-PC3 as output pins to drive LEDs */
  RCC->AHBENR |= 0x04;             // Enable GPIOC clock (bit 2) 
  GPIOC->MODER &= ~(0x000000FF);   // Clear PC0-PC3 mode bits 
  GPIOC->MODER |= (0x00000055);    // General purpose output mode for PC0-PC3*/
- 
+
+RCC->AHBENR |= 0x02;             // Enable GPIOB clock (bit 0) 	
+	
+GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
+GPIOB->MODER |= (0x00005500);    // ^^^^
+
+GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
+GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*	
+	
+GPIOB->BSRR = 0x0010 << 16;      // send 0 to pin 4
+GPIOB->BSRR = 0x0020 << 16;      // send 0 to pin 5
+GPIOB->BSRR = 0x0040 << 16;      // send 0 to pin 6
+GPIOB->BSRR = 0x0080 << 16;      // send 0 to pin 7	
+	
  //EXTI SECTION	
  SYSCFG->EXTICR[0] &= 0xFF0F;   //clears EXTI1 bit
  SYSCFG->EXTICR[0] |= 0x0000;   //set EXTI1 = 0 to select PA1
- EXTI->FTSR |= 0x0002;          //Bit0=1 to make EXTI1 rising-edge trig.
+ EXTI->FTSR |= 0x0002;          //Bit0=1 to make EXTI1 falling-edge trig.
  EXTI->IMR  |= 0x0002;          //Bit0=1 to enable EXTI1
  EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
 
@@ -45,9 +59,6 @@ void PinSetup () {
 	
 //CPU SECTION
 __enable_irq();                 //enable interrupts
-
-  GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
-  GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*
 
 
 }
@@ -67,7 +78,7 @@ void EXTI1_IRQHandler ()
 	int pb7=1;             //reading from PB7
 	int i,j,n;
 	// wait 1 ms
-   	for (i=0; i<20; i++)        //outer loop
+   	for (i=0; i<40; i++)        //outer loop
 	{
    		for (j=0; j<18; j++) 
 		{ 		    //inner loop
@@ -136,7 +147,7 @@ void EXTI1_IRQHandler ()
 	{
 		key=2;
 	}
-	else if((pb4==0) && (pb3==0))  // button 3
+	else if((pb4==0) && (pb2==0))  // button 3
 	{
 		key=3;
 	}
@@ -188,10 +199,11 @@ void EXTI1_IRQHandler ()
 	{
 		key=15;
 	}
-	else                           // button 0
+	else if((pb7==0) && (pb1==0))  // button 0
 	{
 		key=0;
 	}
+	else{}
 	//***************************************************************//display key on LEDs
 	switch(key)
 	{
@@ -311,7 +323,7 @@ void EXTI1_IRQHandler ()
 	   GPIOC->BSRR = 0x0008;
 	
 	// wait 1 ms
-	for (i=0; i<20; i++)        //outer loop
+	for (i=0; i<40; i++)        //outer loop
 	{
    		for (j=0; j<18; j++) 
 		{ 		    //inner loop
@@ -319,11 +331,22 @@ void EXTI1_IRQHandler ()
    		}                   //do nothing
         }
 	
-	GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
- 	GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*
+GPIOB->MODER &= ~(0x000000FF);   // PB0-PB3    input    keypad columns
+GPIOB->MODER |= (0x00000000);    // ^^^^
+				
+GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
+GPIOB->MODER |= (0x00005500);    // ^^^^
+
+GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
+GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*	
 	
-	NVIC_ClearPendingIRQ (7);     // clears pending status
-        EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
+GPIOB->BSRR = 0x0010 << 16;      // send 0 to pin 4
+GPIOB->BSRR = 0x0020 << 16;      // send 0 to pin 5
+GPIOB->BSRR = 0x0040 << 16;      // send 0 to pin 6
+GPIOB->BSRR = 0x0080 << 16;      // send 0 to pin 7	resistors, *CHECK THIS STEP*
+	
+NVIC_ClearPendingIRQ (7);     // clears pending status
+EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
 }
 
 /*----------------------------------------------------------*/
