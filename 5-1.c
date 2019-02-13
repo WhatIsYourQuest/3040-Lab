@@ -46,6 +46,8 @@ void PinSetup () {
 //CPU SECTION
 __enable_irq();                 //enable interrupts
 
+  GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
+  GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*
 
 
 }
@@ -78,7 +80,7 @@ void EXTI1_IRQHandler ()
 	//***************************************************************//reading columns *CHECK THIS STEP*
   
 	GPIOB->MODER &= ~(0x000000FF);   // PB0-PB3    input    keypad columns
-  GPIOB->MODER |= (0x00000000);    // ^^^^
+  	GPIOB->MODER |= (0x00000000);    // ^^^^
   
   GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
   GPIOB->MODER |= (0x00005500);    // ^^^^
@@ -316,6 +318,10 @@ void EXTI1_IRQHandler ()
    			n = j;      //dummy operation for single-step test
    		}                   //do nothing
         }
+	
+	GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
+ 	GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*
+	
 	NVIC_ClearPendingIRQ (7);     // clears pending status
         EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
 }
