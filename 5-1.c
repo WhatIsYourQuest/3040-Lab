@@ -94,6 +94,8 @@ void EXTI1_IRQHandler ()
 	GPIOB->BSRR = 0x0040 << 16;      // send 0 to pin 6
 	GPIOB->BSRR = 0x0080 << 16;      // send 0 to pin 7
 	
+	for (int x=0;x<4;x++);	 // just making sure it has time
+	
 	pb0 = GPIOB->IDR & 0x0001;       //reading PB0
 	pb1 = GPIOB->IDR & 0x0002;       //reading PB1
 	pb2 = GPIOB->IDR & 0x0004;       //reading PB2
@@ -115,6 +117,8 @@ void EXTI1_IRQHandler ()
 	GPIOB->BSRR = 0x0002 << 16;      // send 0 to pin 1
 	GPIOB->BSRR = 0x0004 << 16;      // send 0 to pin 2
 	GPIOB->BSRR = 0x0008 << 16;      // send 0 to pin 3
+	
+	for (int x=0;x<4;x++);	 // just making sure it has time
 	
 	pb4 = GPIOB->IDR & 0x0010;       //reading PB4
 	pb5 = GPIOB->IDR & 0x0020;       //reading PB5
