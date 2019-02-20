@@ -125,7 +125,6 @@ void EXTI1_IRQHandler ()
    			n = j;      //dummy operation for single-step test
    		}                   //do nothing
         }
-	key_var=0;
 
 	
 	//***************************************************************//reading columns *CHECK THIS STEP*
