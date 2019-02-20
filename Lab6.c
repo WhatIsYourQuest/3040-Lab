@@ -46,13 +46,12 @@ GPIOB->BSRR = 0x0040 << 16;      // send 0 to pin 6
 GPIOB->BSRR = 0x0080 << 16;      // send 0 to pin 7	
 
 //counter setup
-TIM10->CNT;                      //enable counter
-TIM10->PSC;                      //enable prescale register
-TIM10->ARR;                      //enable auto reload register
-ARR = 0x1FFF & PSC = 0x19;       //needed to achieve 0.1s
-TIM10->CR1 |=0x01;               //enable counting
-TIM10->DIER |= 0x01;             //enable interrupt from counter
 RCC->APB2ENR |= 0x00000008;      //TIM10EN is enabled
+TIM10->PSC = 0x19;               //enable prescale register
+TIM10->ARR = 0x1FFF;             //enable auto reload register
+TIM10->DIER |= 0x01;             //enable interrupt from counter
+TIM10->CNT;                      //enable counter
+TIM10->SR &= ~0x01;
   
  //EXTI SECTION	
  SYSCFG->EXTICR[0] &= 0xFF0F;   //clears EXTI1 bit
@@ -61,15 +60,15 @@ RCC->APB2ENR |= 0x00000008;      //TIM10EN is enabled
  EXTI->IMR  |= 0x0002;          //Bit0=1 to enable EXTI1
  EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
 
-	
  //NVIC SECTION
  NVIC_EnableIRQ(7);                  //set bit n to enable IRQ7
  NVIC_ClearPendingIRQ (7);           // clears pending status
- NVIC_EnableIRQ(TIM10_IRQ26);        //set bit n to enable TIM10 IRQ
- NVIC_ClearPendingIRQ (TIM10_IRQ26); // clears pending status 
+ NVIC_EnableIRQ(TIM10_IRQn);         //set bit n to enable TIM10 IRQ
+ NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
 	
 //CPU SECTION
-__enable_irq();                 //enable interrupts
+__enable_irq();                  //enable interrupts
+TIM10->CR1 |=0x01;               //enable counting
 }
 
 /*----------------------------------------------------------*/
@@ -102,6 +101,9 @@ void TIM10_IRQHandler ()
    {
       //wasting time like the writers of monty python
    }
+	 TIM10->SR &= ~0x01;
+   NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
+
 }
 /*----------------------------------------------------------*/
 /* EXTI1 Interrupt Function (signals the pressing of a keyboard button
@@ -118,7 +120,7 @@ void EXTI1_IRQHandler ()
 	int pb7=1;             //reading from PB7
 	int i,j,n;
 	// wait 1 ms
-   	for (i=0; i<40; i++)        //outer loop
+   	for (i=0; i<160; i++)        //outer loop
 	{
    		for (j=0; j<18; j++) 
 		{ 		    //inner loop
@@ -467,7 +469,7 @@ void count (a)
 	   else
 	   GPIOC->BSRR = 0x0080;
 	}   
-}
+
 /*------------------------------------------------*/
 /* Main program */
 /*------------------------------------------------*/
