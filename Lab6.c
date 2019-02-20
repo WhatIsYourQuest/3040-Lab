@@ -120,7 +120,7 @@ void EXTI1_IRQHandler ()
 	int pb7=1;             //reading from PB7
 	int i,j,n;
 	// wait 1 ms
-   	for (i=0; i<160; i++)        //outer loop
+   	for (i=0; i<40; i++)        //outer loop
 	{
    		for (j=0; j<18; j++) 
 		{ 		    //inner loop
@@ -276,7 +276,7 @@ void EXTI1_IRQHandler ()
    }	   
 	//***************************************************************//display key on LEDs	
 	// wait 1 ms
-	for (i=0; i<40; i++)        //outer loop
+	for (i=0; i<200; i++)        //outer loop
 	{
    		for (j=0; j<18; j++) 
 		{ 		    //inner loop
