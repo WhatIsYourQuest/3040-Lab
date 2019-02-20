@@ -34,7 +34,6 @@ void PinSetup () {
  GPIOC->MODER |=  (0x00005555);   // General purpose output mode for PC0-PC7
 
 RCC->AHBENR |= 0x02;             // Enable GPIOB clock (bit 0) 	
-	
 GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
 GPIOB->MODER |= (0x00005500);    // ^^^^
 
@@ -78,7 +77,8 @@ __enable_irq();                 //enable interrupts
 /*----------------------------------------------------------*/
 void TIM10_IRQHandler () 
 {
-   state=led1*1+led2*2+led3*4+led4*8;
+   state  = led1*1+led2*2+led3*4+led4*8;
+   state2 = led5*1+led6*2+led7*4+led8*8;
    if(startstop==1) //running
    {
       if(state==9)
@@ -257,7 +257,7 @@ void EXTI1_IRQHandler ()
        startstop=0;
     }
   }
-  else //reset was pressed
+  else if (key==1) //reset was pressed
   {
      if(startstop==0)
      {
@@ -268,7 +268,11 @@ void EXTI1_IRQHandler ()
      {
         //I could make another wasting time joke, but that would waste time
      }
-  }  
+   }
+   else
+   {
+      //lol we're doing nothing
+   }	   
 	//***************************************************************//display key on LEDs	
 	// wait 1 ms
 	for (i=0; i<40; i++)        //outer loop
@@ -302,6 +306,7 @@ EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
 /*---------------------------------------------------------------*/
 void count (a) 
 {
+//***************************************************************//updating tenths LEDs	
    switch(state)
 	   {
 	      case 0:
@@ -364,13 +369,71 @@ void count (a)
 		 led3=0;
 		 led4=1;
 		 break;
-	   }
-   if(key_var<10)
-   {
-   	key_var++;
    }
-   else
-   {
+//***************************************************************//updating seconds LEDs
+   switch(state2)
+	   {
+	      case 0:
+		 led5=0;
+		 led6=0;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 1:
+		 led5=1;
+		 led6=0;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 2:
+		 led5=0;
+		 led6=1;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 3:
+		 led5=1;
+		 led6=1;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 4:
+		 led5=0;
+		 led6=0;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 5:
+		 led5=1;
+		 led6=0;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 6:
+		 led5=0;
+		 led6=1;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 7:
+		 led5=1;
+		 led6=1;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 8:
+		 led5=0;
+		 led6=0;
+		 led7=0;
+		 led8=1;
+		 break;
+	      case 9:
+		 led5=1;
+		 led6=0;
+		 led7=0;
+		 led8=1;
+		 break;   
+	   }
 	   
 	   if (led1 == 0)
 	   GPIOC->BSRR = 0x0001 << 16; 
@@ -388,7 +451,7 @@ void count (a)
 	   GPIOC->BSRR = 0x0008 << 16; 
 	   else
 	   GPIOC->BSRR = 0x0008;
-		 if (led5 == 0)
+           if (led5 == 0)
 	   GPIOC->BSRR = 0x0010 << 16; 
 	   else
 	   GPIOC->BSRR = 0x0010;
@@ -417,6 +480,5 @@ int main(void)
 while(1)
 {
    count(0);
-   delay();
 }
 }
