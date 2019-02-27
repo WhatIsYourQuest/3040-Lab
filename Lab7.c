@@ -20,21 +20,22 @@ unsigned char led4=0;   //state of LED4
 void PinSetup () {
  /* Configure PA1 as input for IRQ */
  RCC->AHBENR   |= 0x01;            // Enable GPIOA clock (bit 0) 
- GPIOA->MODER  &= ~(0x00000000);   // General purpose input mode 
- GPIOA->MODER  &= ~0x00003000;     // Clear PA6
+ GPIOA->MODER  &= ~(0x0000000C);   // Clear PA1
+ GPIOA->MODER  |=   0x00000000;    // General purpose input mode
+ GPIOA->MODER  &= ~(0x00003000);   // Clear PA6
  GPIOA->MODER  |=  0x00002000;     // Sets PA6 to AF mode
- GPIOA->AFR[0] &= ~0x0F000000;     // Clear AFRL6
- GPIOA->AFR[0] |=  0x02000000;     // PA6 = AF2 
- /* Configure PC0-PC7 as output pins to drive LEDs */
+ GPIOA->AFR[0] &= ~(0x0F000000);   // Clear AFRL6
+ GPIOA->AFR[0] |=  0x03000000;     // PA6 = AF3 
+ /* Configure PC0-PC3 as output pins to drive LEDs */
  RCC->AHBENR |= 0x04;             // Enable GPIOC clock (bit 2) 
- GPIOC->MODER &= ~(0x0000FFFF);   // Clear PC0-PC7 mode bits 
- GPIOC->MODER |=  (0x00005555);   // General purpose output mode for PC0-PC7
+ GPIOC->MODER &= ~(0x000000FF);   // Clear PC0-PC3 mode bits 
+ GPIOC->MODER |=  (0x00000055);   // General purpose output mode for PC0-PC7
 
 RCC->AHBENR |= 0x02;             // Enable GPIOB clock (bit 0) 	
 GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
 GPIOB->MODER |= (0x00005500);    // ^^^^
 
-GPIOB->PUPDR &= ~0x0000FFFF;     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
+GPIOB->PUPDR &= ~(0x0000FFFF);     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
 GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*	
 	
 GPIOB->BSRR = 0x0010 << 16;      // send 0 to pin 4
@@ -43,16 +44,16 @@ GPIOB->BSRR = 0x0040 << 16;      // send 0 to pin 6
 GPIOB->BSRR = 0x0080 << 16;      // send 0 to pin 7	
 
 //counter setup
-RCC->CR |= RCC_CR_HSION;             //Turn on high speed (16GHz)
+RCC->CR |= RCC_CR_HSION;             //Turn on high speed (16MHz)
 while((RCC->CR & RCC_CR_HSIRDY)==0); //wait until HSI is ready
 RCC->CFGR |= RCC_CFGR_SW_HSI;        //select HSI as clock
 RCC->APB2ENR |= 0x00000008;          //TIM10EN is enabled
-TIM10->PSC = 0x01;                   //enable prescale register
-TIM10->ARR = 0x3E7F;                 //enable auto reload register
-TIM10->DIER |= 0x01;                 //enable interrupt from counter
-TIM10_CCR1 = 0x00;                   //starts the PWM as always off   
-TIM10_CCMR1-> |= 0x0060;             //PWM mode 1, and output compare and select 
-TIM10_CCER->  |= 0x0002;             //output will drive pin and is active high 
+TIM10->PSC = 0x13;                   //enable prescale register
+TIM10->ARR = 0x1F3F;                 //enable auto reload register
+TIM10->DIER |= 0x03;                 //enable interrupt from counter
+TIM10->CCR1 = 0x00;                   //starts the PWM as always off   
+TIM10->CCMR1 |= 0x0060;             //PWM mode 1, and output compare and select 
+TIM10->CCER  |= 0x0001;             //output will drive pin and is active high 
 TIM10->CNT;                          //enable counter
 TIM10->SR &= ~0x01;
   
@@ -64,10 +65,10 @@ TIM10->SR &= ~0x01;
  EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
 
  //NVIC SECTION
- NVIC_EnableIRQ(7);                  //set bit n to enable IRQ7
- NVIC_ClearPendingIRQ (7);           // clears pending status
- NVIC_EnableIRQ(TIM10_IRQn);         //set bit n to enable TIM10 IRQ
- NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
+ NVIC_EnableIRQ(EXTI1_IRQn);                  //set bit n to enable IRQ7
+ NVIC_ClearPendingIRQ(EXTI1_IRQn);           // clears pending status
+ NVIC_EnableIRQ(7);         //set bit n to enable TIM10 IRQ
+ NVIC_ClearPendingIRQ(7);  // clears pending status 
 	
 //CPU SECTION
 __enable_irq();                  //enable interrupts
@@ -77,11 +78,11 @@ TIM10->CR1 |=0x01;               //enable counting
 /*----------------------------------------------------------*/
 /* TIM10_IRQ26 Interrupt Function (signals the pressing of a keyboard button
 /*----------------------------------------------------------*/
-//void TIM10_IRQHandler () 
-//{
-//	 TIM10->SR &= ~0x01;
-//   NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
-//}
+void TIM10_IRQHandler () 
+{
+	 TIM10->SR &= ~0x01;
+   NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
+}
 /*----------------------------------------------------------*/
 /* EXTI1 Interrupt Function (signals the pressing of a keyboard button
 /*----------------------------------------------------------*/
@@ -103,13 +104,13 @@ void EXTI1_IRQHandler ()
 		{ 		    //inner loop
    			n = j;      //dummy operation for single-step test
    		}                   //do nothing
-        }
+  }
 
 	
 	//***************************************************************//reading columns *CHECK THIS STEP*
   
 	GPIOB->MODER &= ~(0x000000FF);   // PB0-PB3    input    keypad columns
-  	GPIOB->MODER |= (0x00000000);    // ^^^^
+  GPIOB->MODER |= (0x00000000);    // ^^^^
   
   GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
   GPIOB->MODER |= (0x00005500);    // ^^^^
@@ -160,52 +161,52 @@ void EXTI1_IRQHandler ()
 	if((pb4==0) && (pb0==0))       // button 1
 	{
 		key=1;
-    TIM10_CCR1 = 0x640;           //makes it 10% PWM (1600 in decimal)
+    TIM10->CCR1 = 0x320;           //makes it 10% PWM (8000 in decimal)
 	}
 	else if((pb4==0) && (pb1==0))  // button 2
 	{
 		key=2;
-    TIM10_CCR1 = 0xC80;           //makes it 20% PWM (3200 in decimal)
+    TIM10->CCR1 = 0x640;           //makes it 20% PWM (16000 in decimal)
 	}
 	else if((pb4==0) && (pb2==0))  // button 3
 	{
 		key=3;
-    TIM10_CCR1 = 0x12C0;           //makes it 30% PWM (4800 in decimal)
+    TIM10->CCR1 = 0x960;           //makes it 30% PWM (24000 in decimal)
 	}
 	else if((pb5==0) && (pb0==0))  // button 4
 	{
 		key=4;
-    TIM10_CCR1 = 0x1900;           //makes it 40% PWM (6400 in decimal)
+    TIM10->CCR1 = 0xC80;           //makes it 40% PWM (32000 in decimal)
 	}
 	else if((pb5==0) && (pb1==0))  // button 5
 	{
 		key=5;
-    TIM10_CCR1 = 0x1F40;           //makes it 50% PWM (8000 in decimal)
+    TIM10->CCR1 = 0xFA0;           //makes it 50% PWM (4000 in decimal)
 	}
 	else if((pb5==0) && (pb2==0))  // button 6
 	{
 		key=6;
-    TIM10_CCR1 = 0x2580;           //makes it 60% PWM (9600 in decimal)
+    TIM10->CCR1 = 0x12C0;           //makes it 60% PWM (4800 in decimal)
 	}
 	else if((pb6==0) && (pb0==0))  // button 7
 	{
 		key=7;
-    TIM10_CCR1 = 0x2BC0;           //makes it 70% PWM (11200 in decimal)
+    TIM10->CCR1 = 0x15E0;           //makes it 70% PWM (5600 in decimal)
 	}
 	else if((pb6==0) && (pb1==0))  // button 8
 	{
 		key=8;
-    TIM10_CCR1 = 0x3200;           //makes it 80% PWM (12800 in decimal)
+    TIM10->CCR1 = 0x1900;           //makes it 80% PWM (6400 in decimal)
 	}
 	else if((pb6==0) && (pb2==0))  // button 9
 	{
 		key=9;
-    TIM10_CCR1 = 0x3840;           //makes it 90% PWM (14400 in decimal)
+    TIM10->CCR1 = 0x1C20;           //makes it 90% PWM (7200 in decimal)
 	}
 	else if((pb4==0) && (pb3==0))  // button A
 	{
 		key=10;
-    TIM10_CCR1 = 0x3E80;           //makes it 100% PWM (16000 in decimal)
+    TIM10->CCR1 = 0x1F40;           //makes it 100% PWM (8000 in decimal)
 	}
 	else if((pb5==0) && (pb3==0))  // button B
 	{
@@ -230,7 +231,7 @@ void EXTI1_IRQHandler ()
 	else if((pb7==0) && (pb1==0))  // button 0
 	{
 		key=0;
-    TIM10_CCR1 = 0x000;           //makes it 0% PWM
+    TIM10->CCR1 = 0x000;           //makes it 0% PWM
 	}
 	else{}
 	//***************************************************************//display key on LEDs	
@@ -266,9 +267,8 @@ EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
 /*---------------------------------------------------------------*/
 void count (a) 
 {
-//***************************************************************//updating tenths LEDs	
-  state=key; 
-  switch(state)
+//***************************************************************//updating tenths LEDs	 
+  switch(key)
 	   {
 	      case 0:
 		 led1=0;
