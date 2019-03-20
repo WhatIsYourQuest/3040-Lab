@@ -20,29 +20,38 @@ int period=0;           //output from TIM11 counter
 /*---------------------------------------------------*/
 void PinSetup () {
  /* Configure PA1 as input for IRQ */
- RCC->AHBENR   |= 0x01;            // Enable GPIOA clock (bit 0) 
- GPIOA->MODER  &= ~(0x0000000C);   // Clear PA1
- GPIOA->MODER  |=   0x00000000;    // General purpose input mode
- GPIOA->MODER  &= ~(0x00003000);   // Clear PA6
- GPIOA->MODER  |=  0x00002000;     // Sets PA6 to AF mode
- GPIOA->AFR[0] &= ~(0x0F000000);   // Clear AFRL6
- GPIOA->AFR[0] |=  0x03000000;     // PA6 = AF3 
+ RCC->AHBENR   |= 0x01;             // Enable GPIOA clock (bit 0) 
+ GPIOA->MODER  &= ~(0x0000000C);    // Clear PA1
+ GPIOA->MODER  |=   0x00000000;     // General purpose input mode
+ GPIOA->MODER  &= ~(0x00003000);    // Clear PA6
+ GPIOA->MODER  |=  0x00002000;      // Sets PA6 to AF mode
+ GPIOA->AFR[0] &= ~(0x0F000000);    // Clear AFRL6
+ GPIOA->AFR[0] |=  0x03000000;      // PA6 = AF3 
+	
+ GPIOA->MODER  &= ~(0x0000C000);   // Clear PA7
+ GPIOA->MODER  |=  0x00008000;      // Sets PA7 to AF mode
+ GPIOA->AFR[0] &= ~(0xF0000000);    // Clear AFRL7
+ GPIOA->AFR[0] |=  0x30000000;      // PA6 = AF3 
+	
+GPIOA->PUPDR &= ~0x0000C000;     //clear bits 14 and 15 for PA7
+GPIOA->PUPDR |=  0x00004000;     //set bits 14 and 15 to 01 for PA7 pull-up resistor
+	
  /* Configure PC0-PC3 as output pins to drive LEDs */
- RCC->AHBENR |= 0x04;             // Enable GPIOC clock (bit 2) 
- GPIOC->MODER &= ~(0x000000FF);   // Clear PC0-PC3 mode bits 
- GPIOC->MODER |=  (0x00000055);   // General purpose output mode for PC0-PC7
+ RCC->AHBENR |= 0x04;              // Enable GPIOC clock (bit 2) 
+ GPIOC->MODER &= ~(0x000000FF);    // Clear PC0-PC3 mode bits 
+ GPIOC->MODER |=  (0x00000055);    // General purpose output mode for PC0-PC7
 
-RCC->AHBENR |= 0x02;             // Enable GPIOB clock (bit 0) 	
-GPIOB->MODER &= ~(0x0000FF00);   // PB4-PB7    output    keypad rows
-GPIOB->MODER |= (0x00005500);    // ^^^^
+RCC->AHBENR |= 0x02;               // Enable GPIOB clock (bit 0) 	
+GPIOB->MODER &= ~(0x0000FF00);     // PB4-PB7    output    keypad rows
+GPIOB->MODER |= (0x00005500);      // ^^^^
 
 GPIOB->PUPDR &= ~(0x0000FFFF);     //clear bits 0-15 for PB0-PB7  *HERE I AM MAKING SURE THE AND GATE READS LOW*
-GPIOB->PUPDR |=  0x00000055;     //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*	
+GPIOB->PUPDR |=  0x00000055;       //set bits 0-7 to 01 for PB0-PB3 pull-up resistors, *CHECK THIS STEP*	
 	
-GPIOB->BSRR = 0x0010 << 16;      // send 0 to pin 4
-GPIOB->BSRR = 0x0020 << 16;      // send 0 to pin 5
-GPIOB->BSRR = 0x0040 << 16;      // send 0 to pin 6
-GPIOB->BSRR = 0x0080 << 16;      // send 0 to pin 7	
+GPIOB->BSRR = 0x0010 << 16;        // send 0 to pin 4
+GPIOB->BSRR = 0x0020 << 16;        // send 0 to pin 5
+GPIOB->BSRR = 0x0040 << 16;        // send 0 to pin 6
+GPIOB->BSRR = 0x0080 << 16;        // send 0 to pin 7	
 
 //counter setup
 RCC->CR |= RCC_CR_HSION;             //Turn on high speed (16MHz)
@@ -60,12 +69,12 @@ TIM10->CNT;                          //enable counter
 TIM10->SR &= ~0x01;
 
 RCC->APB2ENR |= 0x00000010;          //TIM11EN is enabled
-TIM11->PSC = 1;                      //enable prescale register
-TIM11->ARR = 640000;                 //enable auto reload register
+TIM11->PSC = 159;                      //enable prescale register
+TIM11->ARR = 0xFFFF;                 //enable auto reload register
 TIM11->DIER |= 0x03;                 //enable interrupt from counter
 TIM11->CCR1 = 0x01;                  //starts the PWM as always off   
 TIM11->CCMR1 |= 0x0011;              //PWM mode 1, and output compare and select 
-TIM11->CCER  |= 0x0001;              //output will drive pin and is active high 
+TIM11->CCER  |= 0x0003;              //output will drive pin and is active high 
 TIM11->CNT;                          //enable counter
 TIM11->SR &= ~0x01;
   
@@ -77,12 +86,12 @@ TIM11->SR &= ~0x01;
  EXTI->PR   |= 0x0002;          //Bit0=1 to clear EXTI1 pending status
 
  //NVIC SECTION
- NVIC_EnableIRQ(EXTI1_IRQn);                  //set bit n to enable IRQ7
- NVIC_ClearPendingIRQ(EXTI1_IRQn);           // clears pending status
- NVIC_EnableIRQ(7);         //set bit n to enable TIM10 IRQ
- NVIC_ClearPendingIRQ(7);  // clears pending status 
- NVIC_EnableIRQ(TIM11_IRQn);         //set bit n to enable TIM11 IRQ
- NVIC_ClearPendingIRQ(TIM11_IRQn);  // clears pending status 
+ NVIC_EnableIRQ(EXTI1_IRQn);              //set bit n to enable IRQ7
+ NVIC_ClearPendingIRQ(EXTI1_IRQn);        // clears pending status
+ NVIC_EnableIRQ(7);                       //set bit n to enable TIM10 IRQ
+ NVIC_ClearPendingIRQ(7);                 // clears pending status 
+ NVIC_EnableIRQ(TIM11_IRQn);              //set bit n to enable TIM11 IRQ
+ NVIC_ClearPendingIRQ(TIM11_IRQn);        // clears pending status 
 	
 //CPU SECTION
 __enable_irq();                  //enable interrupts
@@ -101,7 +110,8 @@ void TIM10_IRQHandler ()
 
 void TIM11_IRQHandler ()
 {
-   period = TIM11_CCR1;
+   period = TIM11->CCR1;
+	 TIM11->CNT=0;
    TIM11->SR &=~0x01;
    NVIC_ClearPendingIRQ (TIM11_IRQn);  // clears pending status   
 }
