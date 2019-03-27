@@ -11,7 +11,7 @@ unsigned char led2=0;   //state of LED2
 unsigned char led3=0;   //state of LED3
 unsigned char led4=0;   //state of LED4
 int period=0;           //output from TIM11 counter
-unsigned int amplitude=0;
+double amplitude=0;
 /*---------------------------------------------------*/
 /* Initialize GPIO pins used in the program */
 // PA1        input           IRQ
@@ -22,7 +22,7 @@ unsigned int amplitude=0;
 void PinSetup () {
  /* Configure PA1 as input for IRQ */
  RCC->AHBENR   |= 0x01;             // Enable GPIOA clock (bit 0) 
- RCC->APB2ENR  |= 0x01;             // QUESTIONABLE???
+ RCC->APB2ENR  |= 0x00000200;             // QUESTIONABLE???
  GPIOA->MODER  &= ~(0x0000000C);    // Clear PA1
  GPIOA->MODER  |=   0x00000000;     // General purpose input mode
  GPIOA->MODER  &= ~(0x00003000);    // Clear PA6
@@ -68,29 +68,29 @@ TIM10->CCER  |= 0x0001;              //output will drive pin and is active high
 TIM10->CNT;                          //enable counter
 TIM10->SR &= ~0x01;
 
-//*****
-//RCC->APB2ENR |= 0x00000010;          //TIM11EN is enabled
-//TIM11->PSC = 159;                      //enable prescale register
-//TIM11->ARR = 0xFFFF;                 //enable auto reload register
-//TIM11->DIER |= 0x03;                 //enable interrupt from counter
-//TIM11->CCR1 = 0x01;                  //starts the PWM as always off   
-//TIM11->CCMR1 |= 0x0011;              //PWM mode 1, and output compare and select 
-//TIM11->CCER  |= 0x0003;              //output will drive pin and is active high 
-//TIM11->CNT;                          //enable counter
-//TIM11->SR &= ~0x01;
+
+RCC->APB2ENR |= 0x00000010;          //TIM11EN is enabled
+TIM11->PSC = 159;                      //enable prescale register
+TIM11->ARR = 0xFFFF;                 //enable auto reload register
+TIM11->DIER |= 0x03;                 //enable interrupt from counter
+TIM11->CCR1 = 0x01;                  //starts the PWM as always off   
+TIM11->CCMR1 |= 0x0011;              //PWM mode 1, and output compare and select 
+TIM11->CCER  |= 0x0003;              //output will drive pin and is active high 
+TIM11->CNT;                          //enable counter
+TIM11->SR &= ~0x01;
 	
 //ADC Section *****
 ADC1->CR2 |=1;                  //turn on ADC
-for(i=0;i<20;i++)               //slight delay
+for(int i=0;i<20;i++)               //slight delay
 {}	
 ADC1->CR1 &= ~(0x03000120);      //clear bits 5, 8, 24, and 25
-ADC1->CR1 |=  (0x03000000);      //EOCIE=0, SCAN=0, RES=11
+ADC1->CR1 |=  (0x00000000);      //EOCIE=0, SCAN=0, RES=00
 ADC1->CR2 &= ~(0x40000C02);      //clear bits 1, 10, 11, 30
-ADC1->CR2 |=  (0x00000400);	 //CONT=0, EOCS= 1, ALIGN=0, left SWSTART at 0 (that'll be in the user function)
+ADC1->CR2 |=  (0x00000000);	     //CONT=0, EOCS= 0, ALIGN=0, left SWSTART at 0 (that'll be in the user function)
 ADC1->SMPR3 &= ~ADC_SMPR3_SMP8;  //clear SMP8N bits
 ADC1->SMPR3 |= 0x07000000;       //SMP8 = 7 (384 cycles)
 ADC1->SQR5  &= ~ADC_SQR5_SQ1;    //clears SQ1 bits
-ADC1->SQR5  |= 0x00000007;	 //SQ1 = 7
+ADC1->SQR5  |= 0x00000007;	     //SQ1 = 7
 	
  //EXTI SECTION	
  SYSCFG->EXTICR[0] &= 0xFF0F;   //clears EXTI1 bit
@@ -122,13 +122,7 @@ void TIM10_IRQHandler ()
    NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
 }
 
-void TIM11_IRQHandler ()
-{
-   period = TIM11->CCR1;
-	 TIM11->CNT=0;
-   TIM11->SR &=~0x01;
-   NVIC_ClearPendingIRQ (TIM11_IRQn);  // clears pending status   
-}
+
 /*----------------------------------------------------------*/
 /* EXTI1 Interrupt Function (signals the pressing of a keyboard button
 /*----------------------------------------------------------*/
@@ -410,11 +404,17 @@ void amplitudefinder()
    ADC1->CR2 &= ~(0x40000000);      //clear bit 30
    ADC1->CR2 |=  (0x40000000);	    //SWSTART = 1
    while((ADC1->SR & 0x02)==0);     //***** WE TOTALLY THINK IT SHOULD BE &&
-   amplitude = ADC1->DR;            //reads in value from the data register
-   ADC1->CR2 &= ~(0x40000000);      //clear bit 30
-   ADC1->CR2 |=  (0x00000000);	    //SWSTART = 0
+   ADC1->SR &= ~(0x02); 
+	 amplitude = (ADC1->DR)*3/4096.00;     //reads in value from the data register
+   //ADC1->CR2 &= ~(0x40000000);      //clear bit 30
+   //ADC1->CR2 |=  (0x00000000);	    //SWSTART = 0
 }
-
+void TIM11_IRQHandler ()
+{
+   amplitudefinder();
+   TIM11->SR &=~0x01;
+   NVIC_ClearPendingIRQ (TIM11_IRQn);  // clears pending status   
+}
 /*------------------------------------------------*/
 /* Main program */
 /*------------------------------------------------*/
@@ -426,6 +426,5 @@ int main(void)
 while(1)
 {
    count(0);
-   amplitudefinder();
 }
 }
