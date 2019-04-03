@@ -6,12 +6,14 @@
 /* Define global variables */
 int state=0;            //current state of the LEDs in tenths
 int key=0;              //key that was pressed
+int batman=0;           //index number for reading amplitude values into array
 unsigned char led1=0;   //state of LED1
 unsigned char led2=0;   //state of LED2
 unsigned char led3=0;   //state of LED3
 unsigned char led4=0;   //state of LED4
 int period=0;           //output from TIM11 counter
 double amplitude=0;
+char measurements[200];
 /*---------------------------------------------------*/
 /* Initialize GPIO pins used in the program */
 // PA1        input           IRQ
@@ -70,8 +72,8 @@ TIM10->SR &= ~0x01;
 
 
 RCC->APB2ENR |= 0x00000010;          //TIM11EN is enabled
-TIM11->PSC = 159;                      //enable prescale register
-TIM11->ARR = 0xFFFF;                 //enable auto reload register
+TIM11->PSC = 159;                    //enable prescale register
+TIM11->ARR = 999;                    //enable auto reload register
 TIM11->DIER |= 0x03;                 //enable interrupt from counter
 TIM11->CCR1 = 0x01;                  //starts the PWM as always off   
 TIM11->CCMR1 |= 0x0011;              //PWM mode 1, and output compare and select 
@@ -122,7 +124,17 @@ void TIM10_IRQHandler ()
    NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
 }
 
-
+// Display Value
+void displayvalues(void)
+{	
+   int idx;
+   exec("log > HolyGrail.log");
+   for (idx = 0; idx < 200; idx++)
+   {
+      prinf ("measurements[%02u] = %02u\n", idx, measurements[idx]);
+   }
+   exec("log off");
+}
 /*----------------------------------------------------------*/
 /* EXTI1 Interrupt Function (signals the pressing of a keyboard button
 /*----------------------------------------------------------*/
@@ -271,6 +283,7 @@ void EXTI1_IRQHandler ()
 	else if((pb7==0) && (pb1==0))  // button 0
 	{
 		key=0;
+		displayvalues();
     TIM10->CCR1 = 0x000;           //makes it 0% PWM
 	}
 	else{}
@@ -395,7 +408,8 @@ void count (a)
 	   GPIOC->BSRR = 0x0008 << 16; 
 	   else
 	   GPIOC->BSRR = 0x0008;
-	}   
+	}
+
 //*****
 //*****The user-defined subfunction for reading amplitude
 //*****
@@ -409,9 +423,20 @@ void amplitudefinder()
    //ADC1->CR2 &= ~(0x40000000);      //clear bit 30
    //ADC1->CR2 |=  (0x00000000);	    //SWSTART = 0
 }
+
 void TIM11_IRQHandler ()
 {
    amplitudefinder();
+   //*************************************** NEW STUFF *************************************	
+   if (key != 0)
+   {
+      if (batman<200)
+      {
+         measurements[batman]=amplitude;
+	 batman++;
+      }	     
+   }	   
+   //***************************************************************************************
    TIM11->SR &=~0x01;
    NVIC_ClearPendingIRQ (TIM11_IRQn);  // clears pending status   
 }
