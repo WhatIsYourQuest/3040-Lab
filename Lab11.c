@@ -13,7 +13,7 @@ unsigned char led3=0;   //state of LED3
 unsigned char led4=0;   //state of LED4
 int period=0;           //output from TIM11 counter
 double amplitude=0;
-char measurements[200];
+double measurements[200];
 /*---------------------------------------------------*/
 /* Initialize GPIO pins used in the program */
 // PA1        input           IRQ
@@ -124,17 +124,7 @@ void TIM10_IRQHandler ()
    NVIC_ClearPendingIRQ (TIM10_IRQn);  // clears pending status 
 }
 
-// Display Value
-void displayvalues(void)
-{	
-   int idx;
-   exec("log > HolyGrail.log");
-   for (idx = 0; idx < 200; idx++)
-   {
-      prinf ("measurements[%02u] = %02u\n", idx, measurements[idx]);
-   }
-   exec("log off");
-}
+
 /*----------------------------------------------------------*/
 /* EXTI1 Interrupt Function (signals the pressing of a keyboard button
 /*----------------------------------------------------------*/
@@ -283,7 +273,6 @@ void EXTI1_IRQHandler ()
 	else if((pb7==0) && (pb1==0))  // button 0
 	{
 		key=0;
-		displayvalues();
     TIM10->CCR1 = 0x000;           //makes it 0% PWM
 	}
 	else{}
