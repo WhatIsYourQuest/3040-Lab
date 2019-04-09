@@ -5,15 +5,22 @@
 #include "STM32L1xx.h" /* Microcontroller information */
 /* Define global variables */
 int state=0;            //current state of the LEDs in tenths
+int state2=0;           //current state of the LEDs in seconds
 int key=0;              //key that was pressed
 int batman=0;           //index number for reading amplitude values into array
+int startstop=0;        //0 is not running, and 1 is running  (button 0)
 unsigned char led1=0;   //state of LED1
 unsigned char led2=0;   //state of LED2
 unsigned char led3=0;   //state of LED3
 unsigned char led4=0;   //state of LED4
+unsigned char led5=0;   //state of LED5
+unsigned char led6=0;   //state of LED6
+unsigned char led7=0;   //state of LED7
+unsigned char led8=0;   //state of LED8
 int period=0;           //output from TIM11 counter
 double amplitude=0;
 double measurements[200];
+int k=0;
 /*---------------------------------------------------*/
 /* Initialize GPIO pins used in the program */
 // PA1        input           IRQ
@@ -38,10 +45,10 @@ void PinSetup () {
 GPIOA->PUPDR &= ~0x0000C000;     //clear bits 14 and 15 for PA7
 GPIOA->PUPDR |=  0x00004000;     //set bits 14 and 15 to 01 for PA7 pull-up resistor
 	
- /* Configure PC0-PC3 as output pins to drive LEDs */
+ /* Configure PC0-PC7 as output pins to drive LEDs */
  RCC->AHBENR |= 0x04;              // Enable GPIOC clock (bit 2) 
- GPIOC->MODER &= ~(0x000000FF);    // Clear PC0-PC3 mode bits 
- GPIOC->MODER |=  (0x00000055);    // General purpose output mode for PC0-PC7
+ GPIOC->MODER &= ~(0x0000FFFF);    // Clear PC0-PC7 mode bits 
+ GPIOC->MODER |=  (0x00005555);    // General purpose output mode for PC0-PC7
 
 RCC->AHBENR |= 0x02;               // Enable GPIOB clock (bit 0) 	
 GPIOB->MODER &= ~(0x0000FF00);     // PB4-PB7    output    keypad rows
@@ -252,23 +259,24 @@ void EXTI1_IRQHandler ()
 	}
 	else if((pb5==0) && (pb3==0))  // button B
 	{
-		//key=11;
+		key=11;
 	}
 	else if((pb6==0) && (pb3==0))  // button C
 	{
-		//key=12;
+		key=12;
+			
 	}
 	else if((pb7==0) && (pb3==0))  // button D
 	{
-		//key=13;
+		key=13;
 	}
 	else if((pb7==0) && (pb0==0))  // button * (treat like E)
 	{
-		//key=14;
+		key=14;
 	}
 	else if((pb7==0) && (pb2==0))  // button # (treat like F)
 	{
-		//key=15;
+		key=15;
 	}
 	else if((pb7==0) && (pb1==0))  // button 0
 	{
@@ -276,6 +284,36 @@ void EXTI1_IRQHandler ()
     TIM10->CCR1 = 0x000;           //makes it 0% PWM
 	}
 	else{}
+	
+//***************************************************************//handling key that was pressed
+
+	if(key==12) //toggling startstop
+  {
+    if(startstop==0)
+    {
+       startstop=1;
+    }
+    else
+    {
+       startstop=0;
+    }
+  }
+  else if (key==13) //reset was pressed
+  {
+     if(startstop==0)
+     {
+        state  = 0;
+        state2 = 0;
+     }
+     else
+     {
+        //I could make another wasting time joke, but that would waste time
+     }
+   }
+   else
+   {
+      //lol we're doing nothing
+   }
 	//***************************************************************//display key on LEDs	
 	// wait 1 ms
 	for (i=0; i<200; i++)        //outer loop
@@ -309,8 +347,8 @@ EXTI->PR   |= 0x0002;         //Bit0=1 to clear EXTI1 pending status
 /*---------------------------------------------------------------*/
 void count (a) 
 {
-//***************************************************************//updating tenths LEDs	 
-  switch(key)
+//***************************************************************//updating tenths LEDs	
+   switch(state)
 	   {
 	      case 0:
 		 led1=0;
@@ -372,14 +410,71 @@ void count (a)
 		 led3=0;
 		 led4=1;
 		 break;
-        case 10:
-     led1=0;
-		 led2=1;
-		 led3=0;
-		 led4=1;
-		 break;
    }
-
+//***************************************************************//updating seconds LEDs
+   switch(state2)
+	   {
+	      case 0:
+		 led5=0;
+		 led6=0;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 1:
+		 led5=1;
+		 led6=0;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 2:
+		 led5=0;
+		 led6=1;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 3:
+		 led5=1;
+		 led6=1;
+		 led7=0;
+		 led8=0;
+		 break;
+	      case 4:
+		 led5=0;
+		 led6=0;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 5:
+		 led5=1;
+		 led6=0;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 6:
+		 led5=0;
+		 led6=1;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 7:
+		 led5=1;
+		 led6=1;
+		 led7=1;
+		 led8=0;
+		 break;
+	      case 8:
+		 led5=0;
+		 led6=0;
+		 led7=0;
+		 led8=1;
+		 break;
+	      case 9:
+		 led5=1;
+		 led6=0;
+		 led7=0;
+		 led8=1;
+		 break;   
+	   }
 	   
 	   if (led1 == 0)
 	   GPIOC->BSRR = 0x0001 << 16; 
@@ -397,7 +492,23 @@ void count (a)
 	   GPIOC->BSRR = 0x0008 << 16; 
 	   else
 	   GPIOC->BSRR = 0x0008;
-	}
+           if (led5 == 0)
+	   GPIOC->BSRR = 0x0010 << 16; 
+	   else
+	   GPIOC->BSRR = 0x0010;
+	   if (led6 == 0)
+	   GPIOC->BSRR = 0x0020 << 16; 
+	   else
+	   GPIOC->BSRR = 0x0020;
+	   if (led7 == 0)
+	   GPIOC->BSRR = 0x0040 << 16; 
+	   else
+	   GPIOC->BSRR = 0x0040;
+	   if (led8 == 0)
+	   GPIOC->BSRR = 0x0080 << 16; 
+	   else
+	   GPIOC->BSRR = 0x0080;
+	}   
 
 //*****
 //*****The user-defined subfunction for reading amplitude
@@ -415,7 +526,37 @@ void amplitudefinder()
 
 void TIM11_IRQHandler ()
 {
-   amplitudefinder();
+	k++;
+	if(k==10)
+	{
+	   state  = led1*1+led2*2+led3*4+led4*8;
+       state2 = led5*1+led6*2+led7*4+led8*8;
+       if(startstop==1) //running
+       {
+       if(state==9)
+       {
+          state=0;
+          if(state2==9)
+          {
+             state2=0;
+          }
+          else
+          {
+             state2++;
+          }
+         }
+         else
+         {
+            state++;
+         }
+      }
+      else
+      {
+         //wasting time like the writers of monty python
+      }
+	  k=0;	
+   }	
+	amplitudefinder();
    //*************************************** NEW STUFF *************************************	
    if (key != 0)
    {
