@@ -7,8 +7,15 @@
 int state=0;            //current state of the LEDs in tenths
 int state2=0;           //current state of the LEDs in seconds
 int key=0;              //key that was pressed
+int key2=0;             //key that was pressed (for stopwatch)
 int batman=0;           //index number for reading amplitude values into array
 int startstop=0;        //0 is not running, and 1 is running  (button 0)
+int period=0;           //output from TIM11 counter
+int k=0;
+int pwm=0;              //current pwm setting
+double amplitude=0;
+double measurements[200];
+double vgoal=0;         //voltage goal for the motor's tachometer
 unsigned char led1=0;   //state of LED1
 unsigned char led2=0;   //state of LED2
 unsigned char led3=0;   //state of LED3
@@ -17,10 +24,6 @@ unsigned char led5=0;   //state of LED5
 unsigned char led6=0;   //state of LED6
 unsigned char led7=0;   //state of LED7
 unsigned char led8=0;   //state of LED8
-int period=0;           //output from TIM11 counter
-double amplitude=0;
-double measurements[200];
-int k=0;
 /*---------------------------------------------------*/
 /* Initialize GPIO pins used in the program */
 // PA1        input           IRQ
@@ -210,84 +213,106 @@ void EXTI1_IRQHandler ()
 	if((pb4==0) && (pb0==0))       // button 1
 	{
 		key=1;
-    TIM10->CCR1 = 1600;           //makes it 10% PWM (8000 in decimal)
+		vgoal=0.27;
+		pwm=5850;
+    //TIM10->CCR1 = 1600;           //makes it 10% PWM (8000 in decimal)
+
 	}
 	else if((pb4==0) && (pb1==0))  // button 2
 	{
 		key=2;
-    TIM10->CCR1 = 3200;           //makes it 20% PWM (16000 in decimal)
+		vgoal=0.54;
+		pwm=6650;
+    //TIM10->CCR1 = 3200;           //makes it 20% PWM (16000 in decimal)
 	}
 	else if((pb4==0) && (pb2==0))  // button 3
 	{
 		key=3;
-    TIM10->CCR1 = 4800;           //makes it 30% PWM (24000 in decimal)
+		vgoal=0.81;
+		pwm=7350;
+    //TIM10->CCR1 = 4800;           //makes it 30% PWM (24000 in decimal)
 	}
 	else if((pb5==0) && (pb0==0))  // button 4
 	{
 		key=4;
-    TIM10->CCR1 = 6400;           //makes it 40% PWM (32000 in decimal)
+		vgoal=1.08;
+		pwm=8150;
+    //TIM10->CCR1 = 6400;           //makes it 40% PWM (32000 in decimal)
 	}
 	else if((pb5==0) && (pb1==0))  // button 5
 	{
 		key=5;
-    TIM10->CCR1 = 8000;           //makes it 50% PWM (4000 in decimal)
+		vgoal=1.35;
+		pwm=9000;
+    //TIM10->CCR1 = 8000;           //makes it 50% PWM (4000 in decimal)
 	}
 	else if((pb5==0) && (pb2==0))  // button 6
 	{
 		key=6;
-    TIM10->CCR1 = 9600;           //makes it 60% PWM (4800 in decimal)
+		vgoal=1.62;
+		pwm=9850;
+    //TIM10->CCR1 = 9600;           //makes it 60% PWM (4800 in decimal)
 	}
 	else if((pb6==0) && (pb0==0))  // button 7
 	{
 		key=7;
-    TIM10->CCR1 = 11200;           //makes it 70% PWM (5600 in decimal)
+		vgoal=1.89;
+		pwm=10800;
+    //TIM10->CCR1 = 11200;           //makes it 70% PWM (5600 in decimal)
 	}
 	else if((pb6==0) && (pb1==0))  // button 8
 	{
 		key=8;
-    TIM10->CCR1 = 12800;           //makes it 80% PWM (6400 in decimal)
+		vgoal=2.16;
+		pwm=12000;
+    //TIM10->CCR1 = 12800;           //makes it 80% PWM (6400 in decimal)
 	}
 	else if((pb6==0) && (pb2==0))  // button 9
 	{
 		key=9;
-    TIM10->CCR1 = 14400;           //makes it 90% PWM (7200 in decimal)
+		vgoal=2.43;
+		pwm=13550;
+    //TIM10->CCR1 = 14400;           //makes it 90% PWM (7200 in decimal)
 	}
 	else if((pb4==0) && (pb3==0))  // button A
 	{
 		key=10;
-    TIM10->CCR1 = 16000;           //makes it 100% PWM (8000 in decimal)
+		vgoal=2.7;
+		pwm=15350;
+    //TIM10->CCR1 = 16000;           //makes it 100% PWM (8000 in decimal)
 	}
 	else if((pb5==0) && (pb3==0))  // button B
 	{
-		key=11;
+		//key=11;
 	}
 	else if((pb6==0) && (pb3==0))  // button C
 	{
-		key=12;
+		key2=12;
 			
 	}
 	else if((pb7==0) && (pb3==0))  // button D
 	{
-		key=13;
+		key2=13;
 	}
 	else if((pb7==0) && (pb0==0))  // button * (treat like E)
 	{
-		key=14;
+		//key=14;
 	}
 	else if((pb7==0) && (pb2==0))  // button # (treat like F)
 	{
-		key=15;
+		//key=15;
 	}
 	else if((pb7==0) && (pb1==0))  // button 0
 	{
 		key=0;
     TIM10->CCR1 = 0x000;           //makes it 0% PWM
+		vgoal=0;
 	}
 	else{}
 	
 //***************************************************************//handling key that was pressed
 
-	if(key==12) //toggling startstop
+	if(key2==12) //toggling startstop
   {
     if(startstop==0)
     {
@@ -298,7 +323,7 @@ void EXTI1_IRQHandler ()
        startstop=0;
     }
   }
-  else if (key==13) //reset was pressed
+  else if (key2==13) //reset was pressed
   {
      if(startstop==0)
      {
@@ -314,6 +339,7 @@ void EXTI1_IRQHandler ()
    {
       //lol we're doing nothing
    }
+	 key2=0;
 	//***************************************************************//display key on LEDs	
 	// wait 1 ms
 	for (i=0; i<200; i++)        //outer loop
@@ -524,6 +550,34 @@ void amplitudefinder()
    //ADC1->CR2 |=  (0x00000000);	    //SWSTART = 0
 }
 
+void vgoalreacher()
+{
+	if(amplitude<=vgoal+.001  && amplitude>=vgoal-.001)
+	{
+		//noffin'
+	}
+	else if (key==0)
+	{
+		pwm=0;
+		TIM10->CCR1 = pwm;
+	}	
+	else if(amplitude<=vgoal)
+	{
+		pwm+=5;
+		TIM10->CCR1 = pwm;           //increases the PWM
+	}
+	else if(amplitude>=vgoal)
+	{
+		pwm-=5;
+		if(pwm<0)
+		{
+			pwm=0;
+		}
+		else{}
+		TIM10->CCR1 = pwm;           //decreases the PWM 
+	}	
+	else{}
+}
 void TIM11_IRQHandler ()
 {
 	k++;
@@ -557,6 +611,7 @@ void TIM11_IRQHandler ()
 	  k=0;	
    }	
 	amplitudefinder();
+	vgoalreacher();
    //*************************************** NEW STUFF *************************************	
    if (key != 0)
    {
