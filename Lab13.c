@@ -8,6 +8,10 @@ int state=0;            //current state of the LEDs in tenths
 int state2=0;           //current state of the LEDs in seconds
 int key=0;              //key that was pressed
 int key2=0;             //key that was pressed (for stopwatch)
+//*************************************
+int prevkey=0;          //previous key that was pressed
+int KingAaaahhhrthur=0;       //counting index
+//*************************************
 int batman=0;           //index number for reading amplitude values into array
 int startstop=0;        //0 is not running, and 1 is running  (button 0)
 int period=0;           //output from TIM11 counter
@@ -140,6 +144,7 @@ void TIM10_IRQHandler ()
 /*----------------------------------------------------------*/
 void EXTI1_IRQHandler () 
 {
+	prevkey=key;
 	int pb0=1;             //reading from PB0
 	int pb1=1;             //reading from PB1
 	int pb2=1;             //reading from PB2
@@ -156,7 +161,7 @@ void EXTI1_IRQHandler ()
 		{ 		    //inner loop
    			n = j;      //dummy operation for single-step test
    		}                   //do nothing
-  }
+	}
 
 	
 	//***************************************************************//reading columns *CHECK THIS STEP*
@@ -612,7 +617,11 @@ void TIM11_IRQHandler ()
    }	
 	amplitudefinder();
 	vgoalreacher();
-   //*************************************** NEW STUFF *************************************	
+   if (prevkey==4 && key==5 && KingAaaahhhrthur <1)
+   {
+      TIM10->CCR1 = 16000;
+      KingAaaahhhrthur++;  //That King Arthur, though
+   }
    if (key != 0)
    {
       if (batman<200)
@@ -621,7 +630,6 @@ void TIM11_IRQHandler ()
 	 batman++;
       }	     
    }	   
-   //***************************************************************************************
    TIM11->SR &=~0x01;
    NVIC_ClearPendingIRQ (TIM11_IRQn);  // clears pending status   
 }
