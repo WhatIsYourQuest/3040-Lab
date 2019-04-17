@@ -10,7 +10,7 @@ int key=0;              //key that was pressed
 int key2=0;             //key that was pressed (for stopwatch)
 //*************************************
 int prevkey=0;          //previous key that was pressed
-int KingAaaahhhrthur=0;       //counting index
+int KingAaaahhhrthur=0; //counting index
 //*************************************
 int batman=0;           //index number for reading amplitude values into array
 int startstop=0;        //0 is not running, and 1 is running  (button 0)
@@ -249,6 +249,7 @@ void EXTI1_IRQHandler ()
 		key=5;
 		vgoal=1.35;
 		pwm=9000;
+		KingAaaahhhrthur = 0;
     //TIM10->CCR1 = 8000;           //makes it 50% PWM (4000 in decimal)
 	}
 	else if((pb5==0) && (pb2==0))  // button 6
@@ -618,13 +619,13 @@ void TIM11_IRQHandler ()
 	amplitudefinder();
 	vgoalreacher();
 //**************************************************
-   if (KingAaaahhhrthur ==1 && prevkey==4 && key==5)
+   if (KingAaaahhhrthur ==3 && prevkey==4 && key==5)
    {
-	   TIM10->CCR1 = 9850;
-	   KingAaaahhhrthur = 0;
+	   TIM10->CCR1 = 9000;
+	   KingAaaahhhrthur++;
    }
 //**************************************************
-   if (prevkey==4 && key==5 && KingAaaahhhrthur <1)
+   if (prevkey==4 && key==5 && KingAaaahhhrthur <3)
    {
      
       TIM10->CCR1 = 16000;
