@@ -617,8 +617,16 @@ void TIM11_IRQHandler ()
    }	
 	amplitudefinder();
 	vgoalreacher();
+/**************************************************
+   if (KingAaaahhhrthur ==1 && prevkey==4 && key==5)
+   {
+	   TIM10->CCR1 = 9850;
+	   KingAaaahhhrthur = 0;
+   }
+/**************************************************
    if (prevkey==4 && key==5 && KingAaaahhhrthur <1)
    {
+     
       TIM10->CCR1 = 16000;
       KingAaaahhhrthur++;  //That King Arthur, though
    }
